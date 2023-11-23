@@ -44,6 +44,13 @@ int compute_file_md5(files_list_entry_t *entry) {
  * @return true if directory exists, false else
  */
 bool directory_exists(char *path_to_dir) {
+    struct stat dir;
+
+    if (stat(path_to_dir, &dir) == 0 && S_ISDIR(dir.st_mode)) {
+        return 0;
+    } else {
+        return -1;
+    }
 }
 
 /*!
