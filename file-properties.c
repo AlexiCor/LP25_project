@@ -47,9 +47,9 @@ bool directory_exists(char *path_to_dir) {
     struct stat dir;
 
     if (stat(path_to_dir, &dir) == 0 && S_ISDIR(dir.st_mode)) {
-        return 0;
+        return 0; //Le repertoire existe
     } else {
-        return -1;
+        return -1; //Le repertoire n'existe pas
     }
 }
 
