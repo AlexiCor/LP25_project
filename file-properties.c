@@ -27,6 +27,31 @@
  * @return -1 in case of error, 0 else
  */
 int get_file_stats(files_list_entry_t *entry) {
+    struct stat fileStat;
+
+    if (stat(entry->path, &fileStat) < 0)
+    {
+        return -1; // Échec de la récupération des statistiques
+    }
+
+    entry->mode = fileStat.st_mode;                                                  // Permissions
+    entry->mtime = fileStat.st_mtim.tv_sec * 1000000000L + fileStat.st_mtim.tv_nsec; // Heure de modification en nanosecondes
+    entry->size = fileStat.st_size;                                                  // Taille du fichier
+
+    if (S_ISREG(fileStat.st_mode))
+    {
+        entry->type = FICHIER; // Type de fichier régulier
+    }
+    else if (S_ISDIR(fileStat.st_mode))
+    {
+        entry->type = DOSSIER; // Type de dossier
+    }
+    else
+    {
+        return -1; // Type de fichier non pris en charge
+    }
+
+    return 0;
 }
 
 /*!
