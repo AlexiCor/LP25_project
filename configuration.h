@@ -11,7 +11,6 @@ typedef struct {
     bool uses_md5;
 } configuration_t;
 
-//test
 
 void init_configuration(configuration_t *the_config);
 int set_configuration(configuration_t *the_config, int argc, char *argv[]);
