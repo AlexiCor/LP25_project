@@ -25,6 +25,26 @@ void display_help(char *my_name) {
  * @param the_config is a pointer to the configuration to be initialized
  */
 void init_configuration(configuration_t *the_config) {
+    //Initialisation de source
+    char source_init[1024] = "";
+    *the_config->source = *source_init;
+
+    //Initialisation de destination
+    char destination_init[1024] = "";
+    *the_config->destination = *destination_init;
+
+    //Initialisation de processes_count
+    uint8_t processes_count_init = 0;
+    the_config->processes_count = processes_count_init;
+
+    //Initialisation de is_parallel
+    bool is_parallel_init = 0;
+    the_config->is_parallel = is_parallel_init;
+
+    //Initialisation de uses_md5
+    bool uses_md58_init = 0;
+    the_config->uses_md5 = uses_md58_init;
+
 }
 
 /*!
