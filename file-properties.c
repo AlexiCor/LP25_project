@@ -61,6 +61,44 @@ int get_file_stats(files_list_entry_t *entry) {
  * Use libcrypto functions from openssl/evp.h
  */
 int compute_file_md5(files_list_entry_t *entry) {
+    FILE *file = fopen(entry->path, "rb");
+    if (!file) {
+        return -1; // Échec de l'ouverture du fichier
+    }
+
+    EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
+    if (!mdctx) {
+        fclose(file);
+        return -1; // Échec de la création du contexte MD
+    }
+
+    const EVP_MD *md = EVP_get_digestbyname("MD5");
+    if (!md) {
+        EVP_MD_CTX_free(mdctx);
+        fclose(file);
+        return -1; // MD5 non trouvé
+    }
+
+    unsigned char md_value[EVP_MAX_MD_SIZE];
+    unsigned int md_len, i;
+
+    EVP_DigestInit_ex(mdctx, md, NULL);
+    
+    unsigned char buffer[1024];
+    size_t bytesRead;
+
+    while ((bytesRead = fread(buffer, 1, 1024, file)) != 0) {
+        EVP_DigestUpdate(mdctx, buffer, bytesRead);
+    }
+
+    EVP_DigestFinal_ex(mdctx, md_value, &md_len);
+    EVP_MD_CTX_free(mdctx);
+    fclose(file);
+
+    for (i = 0; i < md_len; i++) {
+        sprintf(&(entry->md5[i * 2]), "%02x", md_value[i]);
+    }
+    return 0;
 }
 
 /*!
@@ -85,4 +123,15 @@ bool directory_exists(char *path_to_dir) {
  * Hint: try to open a file in write mode in the target directory.
  */
 bool is_directory_writable(char *path_to_dir) {
+    char tempFilePath[1024];
+    sprintf(tempFilePath, "%s/tmpfile_XXXXXX", path_to_dir);
+
+    int tempFileDesc = mkstemp(tempFilePath);
+    if (tempFileDesc == -1) {
+        return false; // Échec de la création du fichier temporaire.
+    }
+
+    close(tempFileDesc);
+    unlink(tempFilePath); // Supprime le fichier temporaire.
+    return true;
 }
