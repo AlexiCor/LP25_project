@@ -34,7 +34,7 @@ void init_configuration(configuration_t *the_config) {
     *the_config->destination = *destination_init;
 
     //Initialisation de processes_count
-    uint8_t processes_count_init = 0;
+    uint8_t processes_count_init = 1;
     the_config->processes_count = processes_count_init;
 
     //Initialisation de is_parallel
@@ -58,6 +58,7 @@ int set_configuration(configuration_t *the_config, int argc, char *argv[]) {
 
     if (argc < 3){
         printf("too few arguments!\n");
+        return -1;
     }
     else {
         //source
@@ -66,18 +67,42 @@ int set_configuration(configuration_t *the_config, int argc, char *argv[]) {
         //destination
         *the_config->destination = *argv[2];
 
+        int opt = 0;
+        struct option my_opts[] = {
+                {.name="date-size-only",.has_arg=0,.flag=0,.val='d'},
+                {.name="no-parallel",.has_arg=0,.flag=0,.val='p'},
+                {.name="dry-run",.has_arg=0,.flag=0,.val='r'},
+                {.name=0,.has_arg=0,.flag=0,.val=0}, // last element must be zero
+        };
+        while((opt = getopt_long(argc, argv, "n:v", my_opts, NULL)) != -1) {
+            switch (opt) {
+                case 'n':
+                    the_config->processes_count = *optarg;
+                    break;
+                case 'v':
+                    //A rajouter
+                    break;
+                case 'd':
+                    the_config->uses_md5 = false;
+                    break;
+                case 'p':
+                    the_config->is_parallel = false;
+                    break;
+                case 'r':
+                    //A rajouter
+                    break;
+                default:
+                    printf("Wrong option or missing argument for option\n");
+            }
+        }
+        if (optind < argc) {
+            printf("Remaining program arguments:");
+            for (int i=optind; i<argc; ++i) {
+                printf(" %s", argv[i]);
+            }
+            printf("\n");
+        }
+        return 0;
 
-        //Conditions à rajouter pour vérifications (voir TD/TP)
-        //processes_count
-        uint8_t processes_count_init = 0;
-        the_config->processes_count = processes_count_init;
-
-        //is_parallel
-        bool is_parallel_init = 0;
-        the_config->is_parallel = is_parallel_init;
-
-        //uses_md5
-        bool uses_md58_init = 0;
-        the_config->uses_md5 = uses_md58_init;
     }
 }
