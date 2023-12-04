@@ -59,14 +59,15 @@ int set_configuration(configuration_t *the_config, int argc, char *argv[]) {
     if (argc < 3){
         printf("too few arguments!\n");
         return -1;
-    }
-    else {
+    } else {
         //source
         *the_config->source = *argv[1];
 
         //destination
         *the_config->destination = *argv[2];
 
+
+        //Vérification des options
         int opt = 0;
         struct option my_opts[] = {
                 {.name="date-size-only",.has_arg=0,.flag=0,.val='d'},
