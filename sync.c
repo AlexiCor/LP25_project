@@ -74,7 +74,7 @@ bool mismatch(files_list_entry_t *lhd, files_list_entry_t *rhd, bool has_md5) {
 }
 
 /*!
- * @brief make_files_list buils a files list in no parallel mode
+ * @brief make_files_list builds a files list in no parallel mode
  * @param list is a pointer to the list that will be built
  * @param target_path is the path whose files to list
  */
