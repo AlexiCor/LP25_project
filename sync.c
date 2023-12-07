@@ -21,6 +21,11 @@
  * @param p_context is a pointer to the processes context
  */
 void synchronize(configuration_t *the_config, process_context_t *p_context) {
+    if (the_config->is_parallel == false){ //Synchronisation en mode séquentiel
+
+    } else { //Synchronisation en mode parallèle
+
+    }
 }
 
 /*!
