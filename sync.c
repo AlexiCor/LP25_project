@@ -23,8 +23,12 @@
 void synchronize(configuration_t *the_config, process_context_t *p_context) {
     if (the_config->is_parallel == false){ //Synchronisation en mode séquentiel
 
-    } else { //Synchronisation en mode parallèle
 
+
+
+
+    } else { //Synchronisation en mode parallèle
+        //A implémenter dans un second temps
     }
 }
 
