@@ -21,15 +21,35 @@
  * @param p_context is a pointer to the processes context
  */
 void synchronize(configuration_t *the_config, process_context_t *p_context) {
-    if (the_config->is_parallel == false){ //Synchronisation en mode séquentiel
+    if (!the_config || !p_context) return;
 
+    // Initialize file lists for source and destination
+    files_list_t src_list = {0}, dst_list = {0};
 
-
-
-
-    } else { //Synchronisation en mode parallèle
-        //A implémenter dans un second temps
+    // Building the file lists: the approach changes based on parallel or non-parallel operation
+    if (the_config->is_parallel) {
+        // Parallel list building (this function needs to be implemented based on your parallel processing strategy)
+        make_files_lists_parallel(&src_list, &dst_list, the_config, p_context->message_queue_id);
+    } else {
+        // Non-parallel list building
+        make_files_list(&src_list, the_config->source);
+        make_files_list(&dst_list, the_config->destination);
     }
+
+    // Iterate through the source list to find differences and apply them to the destination
+    for (files_list_entry_t *src_entry = src_list.head; src_entry != NULL; src_entry = src_entry->next) {
+        // Find corresponding entry in destination list
+        files_list_entry_t *dst_entry = find_entry_by_name(&dst_list, src_entry->path_and_name, 0, 0);
+
+        // If there is a mismatch or the file doesn't exist in the destination, copy/update it
+        if (!dst_entry || mismatch(src_entry, dst_entry, the_config->uses_md5)) {
+            copy_entry_to_destination(src_entry, the_config);
+        }
+    }
+
+    // Clean up file lists after processing
+    clear_files_list(&src_list);
+    clear_files_list(&dst_list);
 }
 
 /*!
@@ -79,6 +99,27 @@ bool mismatch(files_list_entry_t *lhd, files_list_entry_t *rhd, bool has_md5) {
  * @param target_path is the path whose files to list
  */
 void make_files_list(files_list_t *list, char *target_path) {
+    if (!list || !target_path) return;
+
+    DIR *dir = opendir(target_path);
+    if (!dir) return;
+
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+            continue;
+        }
+
+        // Construct full path
+        char full_path[4096];
+        snprintf(full_path, sizeof(full_path), "%s/%s", target_path, entry->d_name);
+
+        // Create new list entry
+        files_list_entry_t *new_entry = add_file_entry(list, full_path);
+        // Here you might want to set additional properties for new_entry if needed
+    }
+
+    closedir(dir);
 }
 
 /*!
@@ -97,7 +138,39 @@ void make_files_lists_parallel(files_list_t *src_list, files_list_t *dst_list, c
  * Pay attention to the path so that the prefixes are not repeated from the source to the destination
  * Use sendfile to copy the file, mkdir to create the directory
  */
+
 void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t *the_config) {
+    if (!source_entry || !the_config) return;
+
+    // Open source file
+    int source_fd = open(source_entry->path_and_name, O_RDONLY);
+    if (source_fd == -1) return;
+
+    // Create destination file path
+    char destination_path[4096];
+    // Assuming concat_path is implemented correctly
+    concat_path(destination_path, the_config->destination, source_entry->path_and_name);
+
+    // Open or create destination file
+    int dest_fd = open(destination_path, O_WRONLY | O_CREAT, source_entry->mode);
+    if (dest_fd == -1) {
+        close(source_fd);
+        return;
+    }
+
+    // Copy file data
+    struct stat file_stat;
+    fstat(source_fd, &file_stat);
+    sendfile(dest_fd, source_fd, NULL, file_stat.st_size);
+
+    // Preserve mtime
+    struct timespec times[2];
+    times[0] = source_entry->mtime; // atime
+    times[1] = source_entry->mtime; // mtime
+    futimens(dest_fd, times);
+
+    close(source_fd);
+    close(dest_fd);
 }
 
 /*!
@@ -116,7 +189,9 @@ void make_list(files_list_t *list, char *target) {
  * @return a pointer to a dir, NULL if it cannot be opened
  */
 DIR *open_dir(char *path) {
+    return opendir(path);
 }
+
 
 /*!
  * @brief get_next_entry returns the next entry in an already opened dir
@@ -125,4 +200,11 @@ DIR *open_dir(char *path) {
  * Relevant entries are all regular files and dir, except . and ..
  */
 struct dirent *get_next_entry(DIR *dir) {
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+            return entry;
+        }
+    }
+    return NULL;
 }
