@@ -110,5 +110,11 @@ bool directory_exists(char *path_to_dir) {
  * Hint: try to open a file in write mode in the target directory.
  */
 bool is_directory_writable(char *path_to_dir) {
+    if (access(path_to_dir, W_OK) == 0) {
+        return true; //Il est possible d'écrire dans le répertoire
+    }
+    else {
+        return false; //Il est impossible d'écrire dans le répertoire
+    }
     return access(path_to_dir, W_OK) == 0;
 }
