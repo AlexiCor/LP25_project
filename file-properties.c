@@ -34,7 +34,7 @@ int get_file_stats(files_list_entry_t *entry) {
     }
 
     entry->mode = file_stat.st_mode;
-    entry->mtime.tv_sec = file_stat.st_mtime;
+    entry->mtime.tv_nsec = file_stat.st_mtime;
     entry->size = file_stat.st_size;
 
     if (S_ISREG(file_stat.st_mode)) {
