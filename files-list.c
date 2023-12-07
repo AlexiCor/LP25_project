@@ -28,6 +28,118 @@ void clear_files_list(files_list_t *list) {
  *  @return a pointer to the added element if success, NULL else (out of memory)
  */
 files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
+
+    //we verify if the file already exists in the list
+    for (files_list_entry_t *cursor=list->head; cursor!=NULL; cursor=cursor->next) {
+        if (strcmp(cursor->path_and_name, file_path) == 0) {
+            return 0;
+        }
+    }
+    // If the file does not exist in the list, we will add it
+
+    // we allocate memory for a variable of type files_list_entry_t named new_entry
+    files_list_entry_t *new_entry = malloc(sizeof(files_list_entry_t));
+    // We check if the allocation of memory was successful, if not we return NULL (out of memory)
+    if (!new_entry) {
+        return NULL;
+    }
+
+    // We initialize the entire memory space allocated to new entry to 0;
+    memset(new_entry, 0, sizeof(files_list_entry_t));
+
+    // We will now fill the different elements of the structure of new_entry
+    // (We can replace this by a function)
+        //char path_and_name[4096];
+        strcpy(new_entry->path_and_name, file_path);
+        //  struct timespec mtime;
+        //  uint64_t size;
+        //  uint8_t md5sum[16];
+        //  file_type_t entry_type;
+        //  mode_t mode;
+        //  struct _files_list_entry *next;
+        new_entry->next = NULL;
+        //  struct _files_list_entry *prev;
+        if (!list->tail){
+            new_entry->prev = list->tail;
+        } else {
+            new_entry->prev = NULL;
+        }
+        list->tail = new_entry;
+    // We have finished filling in the different elements of the structure of new_entry
+
+    // We add the new_entry to the list of files, but we have to add it in an ordered manner (with strcmp)
+    // We check if the list is empty, if it is we add the new_entry to the head of the list
+    // else we will add it in an ordered manner
+    if (list->head == NULL) {
+        list->head = new_entry;
+        return new_entry;
+    } else {
+        for (files_list_entry_t *cursor=list->head; cursor!=NULL; cursor=cursor->next) {
+            if (strcmp(cursor->path_and_name, file_path) > 0) {
+                cursor = cursor->next;
+            } else {
+                if (cursor->prev) {
+                    cursor->prev->next = new_entry;
+                    new_entry->prev = cursor->prev;
+                } else {
+                    list->head = new_entry;
+                }
+                cursor->prev = new_entry;
+                new_entry->next = cursor;
+                return new_entry;
+            }
+        }
+    }
+
+
+
+
+
+    /*idea
+    files_list_entry_t *new_entry = malloc(sizeof(files_list_entry_t));
+    if (!new_entry) {
+        return NULL;
+    }
+    memset(new_entry, 0, sizeof(files_list_entry_t));
+    strcpy(new_entry->path_and_name, file_path);
+    if (stat(file_path, &new_entry->stat) == -1) {
+        free(new_entry);
+        return NULL;
+    }
+    new_entry->next = NULL;
+    new_entry->prev = NULL;
+    if (!list->head) {
+        list->head = new_entry;
+        list->tail = new_entry;
+        return new_entry;
+    }
+    files_list_entry_t *cursor = list->head;
+    while (cursor) {
+        if (strcmp(cursor->path_and_name, file_path) == 0) {
+            free(new_entry);
+            return NULL;
+        }
+        if (strcmp(cursor->path_and_name, file_path) > 0) {
+            if (cursor->prev) {
+                cursor->prev->next = new_entry;
+                new_entry->prev = cursor->prev;
+            } else {
+                list->head = new_entry;
+            }
+            cursor->prev = new_entry;
+            new_entry->next = cursor;
+            return new_entry;
+        }
+        if (!cursor->next) {
+            cursor->next = new_entry;
+            new_entry->prev = cursor;
+            list->tail = new_entry;
+            return new_entry;
+        }
+        cursor = cursor->next;
+    }
+    return NULL;
+    */
 }
 
 /*!
