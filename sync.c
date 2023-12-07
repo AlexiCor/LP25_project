@@ -40,6 +40,37 @@ void synchronize(configuration_t *the_config, process_context_t *p_context) {
  * @return true if both files are not equal, false else
  */
 bool mismatch(files_list_entry_t *lhd, files_list_entry_t *rhd, bool has_md5) {
+    //Initialisation de variables de tests
+    bool same_mode = false;
+    bool same_mtime = false;
+    bool same_size = false;
+    bool same_entry_type = false;
+    bool same_md5_sum = true;
+
+    if (lhd->mode == rhd->mode){ //On vérifie si les permissions sont les même
+        same_mode = true;
+    }
+    if (lhd->mtime.tv_sec == rhd->mtime.tv_sec && lhd->mtime.tv_nsec == rhd->mtime.tv_nsec){ //On vérifie le temps est le même
+        same_mtime = true;
+    }
+    if (lhd->size == rhd->size){ //On vérifie si la taille est la même
+        same_size = true;
+    }
+    if (lhd->entry_type == rhd->entry_type && lhd->entry_type == FICHIER){ //On vérifie si les fichiers sont du même type (de type FICHIER)
+        same_entry_type = true;
+    }
+    if (has_md5 == true){ //On vérifie si la vérification de la somme MD5 est activée
+        if (lhd->md5sum != rhd->md5sum){ //On vérifie si la somme MD5 est différente
+            same_mode = false;
+        }
+    }
+
+    if (same_mode && same_mtime && same_size && same_entry_type && same_md5_sum){
+        return false; //Les fichiers sont les même
+    }
+    else {
+        return true; //Les fichiers sont différents
+    }
 }
 
 /*!
