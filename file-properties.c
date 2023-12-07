@@ -27,31 +27,25 @@
  * @return -1 in case of error, 0 else
  */
 int get_file_stats(files_list_entry_t *entry) {
-    struct stat fileStat;
-
-    if (stat(entry->path, &fileStat) < 0)
-    {
-        return -1; // Échec de la récupération des statistiques
+    struct stat file_stat;
+    if (stat(entry->path_and_name, &file_stat) == -1) {
+        perror("stat");
+        return -1; // Error while getting file stats
     }
 
-    entry->mode = fileStat.st_mode;                                                  // Permissions
-    entry->mtime = fileStat.st_mtim.tv_sec * 1000000000L + fileStat.st_mtim.tv_nsec; // Heure de modification en nanosecondes
-    entry->size = fileStat.st_size;                                                  // Taille du fichier
+    entry->mode = file_stat.st_mode;
+    entry->mtime = file_stat.st_mtim;
+    entry->size = file_stat.st_size;
 
-    if (S_ISREG(fileStat.st_mode))
-    {
-        entry->type = FICHIER; // Type de fichier régulier
-    }
-    else if (S_ISDIR(fileStat.st_mode))
-    {
-        entry->type = DOSSIER; // Type de dossier
-    }
-    else
-    {
-        return -1; // Type de fichier non pris en charge
+    if (S_ISREG(file_stat.st_mode)) {
+        entry->entry_type = FICHIER;
+    } else if (S_ISDIR(file_stat.st_mode)) {
+        entry->entry_type = DOSSIER;
+    } else {
+        return -1; // Unsupported file type
     }
 
-    return 0;
+    return 0; // Success
 }
 
 /*!
@@ -61,43 +55,35 @@ int get_file_stats(files_list_entry_t *entry) {
  * Use libcrypto functions from openssl/evp.h
  */
 int compute_file_md5(files_list_entry_t *entry) {
-    FILE *file = fopen(entry->path, "rb");
+    if (!entry || !entry->path_and_name) return -1;
+
+    FILE *file = fopen(entry->path_and_name, "rb");
     if (!file) {
-        return -1; // Échec de l'ouverture du fichier
+        perror("Error opening file");
+        return -1;
     }
 
     EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
     if (!mdctx) {
         fclose(file);
-        return -1; // Échec de la création du contexte MD
+        return -1;
     }
 
-    const EVP_MD *md = EVP_get_digestbyname("MD5");
-    if (!md) {
-        EVP_MD_CTX_free(mdctx);
-        fclose(file);
-        return -1; // MD5 non trouvé
-    }
+    EVP_DigestInit_ex(mdctx, EVP_md5(), NULL);
 
-    unsigned char md_value[EVP_MAX_MD_SIZE];
-    unsigned int md_len, i;
-
-    EVP_DigestInit_ex(mdctx, md, NULL);
-    
-    unsigned char buffer[1024];
+    unsigned char buffer[MAX_BUF_SIZE];
     size_t bytesRead;
 
-    while ((bytesRead = fread(buffer, 1, 1024, file)) != 0) {
+    while ((bytesRead = fread(buffer, 1, MAX_BUF_SIZE, file)) > 0) {
         EVP_DigestUpdate(mdctx, buffer, bytesRead);
     }
 
-    EVP_DigestFinal_ex(mdctx, md_value, &md_len);
-    EVP_MD_CTX_free(mdctx);
     fclose(file);
 
-    for (i = 0; i < md_len; i++) {
-        sprintf(&(entry->md5[i * 2]), "%02x", md_value[i]);
-    }
+    unsigned int md_len;
+    EVP_DigestFinal_ex(mdctx, entry->md5sum, &md_len);
+    EVP_MD_CTX_free(mdctx);
+
     return 0;
 }
 
@@ -107,14 +93,15 @@ int compute_file_md5(files_list_entry_t *entry) {
  * @return true if directory exists, false else
  */
 bool directory_exists(char *path_to_dir) {
-    struct stat dir;
+    struct stat dirStat;
 
-    if (stat(path_to_dir, &dir) == 0 && S_ISDIR(dir.st_mode)) {
-        return 0; //Le repertoire existe.
+    if (stat(path_to_dir, &dirStat) == 0 && S_ISDIR(dirStat.st_mode)) {
+        return true;
     } else {
-        return -1; //Le repertoire n'existe pas.
+        return false;
     }
 }
+
 
 /*!
  * @brief is_directory_writable tests if a directory is writable
@@ -123,10 +110,5 @@ bool directory_exists(char *path_to_dir) {
  * Hint: try to open a file in write mode in the target directory.
  */
 bool is_directory_writable(char *path_to_dir) {
-    if (access(path_to_dir, W_OK) == 0) {
-        return true; //Il est possible d'écrire dans le répertoire
-    }
-    else {
-        return false; //Il est impossible d'écrire dans le répertoire
-    }
+    return access(path_to_dir, W_OK) == 0;
 }
