@@ -123,7 +123,7 @@ bool directory_exists(char *path_to_dir) {
  * Hint: try to open a file in write mode in the target directory.
  */
 bool is_directory_writable(char *path_to_dir) {
-    char tempFilePath[1024];
+    /*char tempFilePath[1024];
     sprintf(tempFilePath, "%s/tmpfile_XXXXXX", path_to_dir);
 
     int tempFileDesc = mkstemp(tempFilePath);
@@ -133,5 +133,15 @@ bool is_directory_writable(char *path_to_dir) {
 
     close(tempFileDesc);
     unlink(tempFilePath); // Supprime le fichier temporaire.
-    return true;
+    return true;*/
+
+    //A vérifier mais incorrect selon moi
+    //Implémentation fonctionelle et plus simple en dessous
+
+    if (access(path_to_dir, W_OK) == 0) {
+        return true; //Il est possible d'écrire dans le répertoire
+    }
+    else {
+        return false; //Il est impossible d'écrire dans le répertoire
+    }
 }
