@@ -40,12 +40,20 @@ void init_configuration(configuration_t *the_config) {
     the_config->processes_count = processes_count_init;
 
     //Initialisation de is_parallel
-    bool is_parallel_init = 0;
+    bool is_parallel_init = true;
     the_config->is_parallel = is_parallel_init;
 
     //Initialisation de uses_md5
-    bool uses_md58_init = 0;
+    bool uses_md58_init = true;
     the_config->uses_md5 = uses_md58_init;
+
+    //Initialisation de is_verbose
+    bool is_verbose_init = false;
+    the_config->is_verbose = is_verbose_init;
+
+    //Initialisation de is_dry_run
+    bool is_dry_run_init = false;
+    the_config->is_dry_run = is_dry_run_init;
 
 }
 
@@ -68,7 +76,6 @@ int set_configuration(configuration_t *the_config, int argc, char *argv[]) {
         //destination
         *the_config->destination = *argv[2];
 
-
         //Vérification des options
         int opt = 0;
         struct option my_opts[] = {
@@ -83,7 +90,7 @@ int set_configuration(configuration_t *the_config, int argc, char *argv[]) {
                     the_config->processes_count = *optarg;
                     break;
                 case 'v':
-                    //A rajouter
+                    the_config->is_verbose = true;
                     break;
                 case 'd':
                     the_config->uses_md5 = false;
@@ -92,7 +99,7 @@ int set_configuration(configuration_t *the_config, int argc, char *argv[]) {
                     the_config->is_parallel = false;
                     break;
                 case 'r':
-                    //A rajouter
+                    the_config->is_dry_run = true;
                     break;
                 default:
                     printf("Wrong option or missing argument for option\n");
