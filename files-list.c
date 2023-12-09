@@ -195,6 +195,31 @@ void compute_md5_file(const char *filename, uint8_t result[16]) {
  * @return 0 in case of success, -1 else
  */
 int add_entry_to_tail(files_list_t *list, files_list_entry_t *entry) {
+
+    // We check if the list and the entry are not NULL
+    if (list != NULL && entry != NULL) {
+        // We check if the list is empty, if it is we add the entry to the head and the tail of the list (the list has only one element)
+        // else we will add it only to the tail of the list
+        if (list->head == NULL && list->tail == NULL) {
+            list->head = entry;
+            list->tail = entry;
+            return 0;
+        } else {
+            if (list->head != NULL && list->tail != NULL) {
+                list->tail->next = entry;
+                entry->prev = list->tail;
+                list->tail = entry;
+                return 0;
+            } else {
+                printf("Error in the function add_entry_to_tail of the file files-list.c\n");
+                printf("The list is not empty but the head or the tail is NULL\n");
+                return -1;
+            }
+        }
+    } else {
+        printf("Error in the function add_entry_to_tail of the file files-list.c\n");
+        return -1;
+    }
 }
 
 /*!
