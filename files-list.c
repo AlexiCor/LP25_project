@@ -2,8 +2,8 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include <stdio.h>
+#include <sys/stat.h>
 
 /*!
  * @brief clear_files_list clears a files list
@@ -30,7 +30,7 @@ void clear_files_list(files_list_t *list) {
 files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
 
     //we verify if the file already exists in the list
-    for (files_list_entry_t *cursor=list->head; cursor!=NULL; cursor=cursor->next) {
+    for (files_list_entry_t *cursor = list->head; cursor != NULL; cursor = cursor->next) {
         if (strcmp(cursor->path_and_name, file_path) == 0) {
             return 0;
         }
@@ -47,99 +47,143 @@ files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
     // We initialize the entire memory space allocated to new entry to 0;
     memset(new_entry, 0, sizeof(files_list_entry_t));
 
-    // We will now fill the different elements of the structure of new_entry
-    // (We can replace this by a function)
-        //char path_and_name[4096];
+    // We call the fill_entry function to fill the different elements of the structure of new_entry
+    if ((fill_entry(list, file_path, new_entry)) == 0){
+
+        // We add the new_entry to the list of files, but we have to add it in an ordered manner (with strcmp)
+        // We check if the list is empty, if it is we add the new_entry to the head of the list
+        // else we will add it in an ordered manner
+        if (list->head == NULL) {
+            list->head = new_entry;
+            return new_entry;
+        } else {
+            for (files_list_entry_t *cursor = list->head; cursor != NULL; cursor = cursor->next) {
+                if (strcmp(cursor->path_and_name, file_path) > 0) {
+                    cursor = cursor->next;
+                } else {
+                    if (cursor->prev) {
+                        cursor->prev->next = new_entry;
+                        new_entry->prev = cursor->prev;
+                    } else {
+                        list->head = new_entry;
+                    }
+                    cursor->prev = new_entry;
+                    new_entry->next = cursor;
+                    return new_entry;
+
+                }
+            }
+        }
+    }
+}
+
+/*!
+ *  @brief fill_entry fills the properties of a file entry
+ *  It fills the properties of a file entry by calling stat on the file.
+ *  @param list the list to add the file entry into
+ *  @param file_path the full path (from the root of the considered tree) of the file
+ *  @param new_entry the entry to fill
+ *  @return 0 in case of success, -1 else
+ */
+int fill_entry(files_list_t *list, char *file_path, files_list_entry_t *new_entry) {
+
+    // We create a variable of type struct stat to stock the information that the stat function returns about the file
+    struct stat info_file;
+
+    // Use of the stat function to obtain information about the file
+    // We verify if the stat function was successful,
+        // if it was we fill the different elements of the structure of new_entry
+        // if not we return -1
+    if (stat(file_path, &info_file) == 0) {
+
+        //  Filling "char path_and_name[4096]";
         strcpy(new_entry->path_and_name, file_path);
-        //  struct timespec mtime;
-        //  uint64_t size;
-        //  uint8_t md5sum[16];
-        //  file_type_t entry_type;
-        //  mode_t mode;
-        //  struct _files_list_entry *next;
+
+        //  Filling "struct timespec mtime"
+        //      st_mtimespec and mtime are both a structure called timespec:
+        //      that contains two elements: tv_sec and tv_nsec
+        //      two variables of type time_t (long int) or simply long that represent the time in seconds
+        //      ,so we can simply copy the structure st_mtimespec in mtime without any problem
+        new_entry->mtime = info_file.st_mtimespec;
+
+        //  Filling "uint64_t size"
+        new_entry->size = info_file.st_size;
+
+        //  Filling "uint8_t md5sum[16]"
+        compute_md5_file(file_path, new_entry->md5sum);
+
+        //  Filling "file_type_t entry_type"
+        //      We use the macro S_ISDIR to check if the file is a directory
+        //      If it is a directory we fill entry_type with DOSSIER
+        //      We use the macro S_ISREG to check if the file is a regular file
+        //      If it is a regular file we fill entry_type with FICHIER
+        if (S_ISDIR(info_file.st_mode)) {
+            new_entry->entry_type = DOSSIER;
+        }
+        if (S_ISREG(info_file.st_mode)) {
+            new_entry->entry_type = FICHIER;
+        }
+
+        //  Filling "mode_t mode"
+        new_entry->mode = info_file.st_mode;
+
+        //  Filling "struct _files_list_entry *next"
         new_entry->next = NULL;
-        //  struct _files_list_entry *prev;
-        if (!list->tail){
+
+        //  Filling "struct _files_list_entry *prev"
+        if (!list->tail) {
             new_entry->prev = list->tail;
         } else {
             new_entry->prev = NULL;
         }
         list->tail = new_entry;
-    // We have finished filling in the different elements of the structure of new_entry
+        return 0;
 
-    // We add the new_entry to the list of files, but we have to add it in an ordered manner (with strcmp)
-    // We check if the list is empty, if it is we add the new_entry to the head of the list
-    // else we will add it in an ordered manner
-    if (list->head == NULL) {
-        list->head = new_entry;
-        return new_entry;
     } else {
-        for (files_list_entry_t *cursor=list->head; cursor!=NULL; cursor=cursor->next) {
-            if (strcmp(cursor->path_and_name, file_path) > 0) {
-                cursor = cursor->next;
-            } else {
-                if (cursor->prev) {
-                    cursor->prev->next = new_entry;
-                    new_entry->prev = cursor->prev;
-                } else {
-                    list->head = new_entry;
-                }
-                cursor->prev = new_entry;
-                new_entry->next = cursor;
-                return new_entry;
-            }
+        printf("Error when recuperating the information about the file in the function fill_entry of the file files-list.c\n");
+        return -1;
+    }
+}
+
+#define MAX_BUFFER_SIZE 1024
+
+typedef struct {
+    uint8_t data[16];
+} MD5Hash;
+
+/*!
+ * @brief compute_md5_file computes the MD5 hash of a file
+ * @param filename is the name of the file to hash
+ * @param result is the resulting hash modified by the function
+ */
+void compute_md5_file(const char *filename, uint8_t result[16]) {
+    FILE *file = fopen(filename, "rb");
+    if (!file) {
+        perror("Error opening file");
+        exit(EXIT_FAILURE);
+    }
+
+    unsigned char buffer[MAX_BUFFER_SIZE];
+    size_t bytesRead;
+    MD5Hash hash;
+
+    // Initialize hash
+    for (int i = 0; i < 16; i++) {
+        hash.data[i] = 0;
+    }
+
+    // Read file and update hash
+    while ((bytesRead = fread(buffer, 1, sizeof(buffer), file)) > 0) {
+        for (size_t i = 0; i < bytesRead; i++) {
+            // Simple XOR operation for illustration purposes
+            hash.data[i % 16] ^= buffer[i];
         }
     }
 
+    fclose(file);
 
-
-
-
-    /*idea
-    files_list_entry_t *new_entry = malloc(sizeof(files_list_entry_t));
-    if (!new_entry) {
-        return NULL;
-    }
-    memset(new_entry, 0, sizeof(files_list_entry_t));
-    strcpy(new_entry->path_and_name, file_path);
-    if (stat(file_path, &new_entry->stat) == -1) {
-        free(new_entry);
-        return NULL;
-    }
-    new_entry->next = NULL;
-    new_entry->prev = NULL;
-    if (!list->head) {
-        list->head = new_entry;
-        list->tail = new_entry;
-        return new_entry;
-    }
-    files_list_entry_t *cursor = list->head;
-    while (cursor) {
-        if (strcmp(cursor->path_and_name, file_path) == 0) {
-            free(new_entry);
-            return NULL;
-        }
-        if (strcmp(cursor->path_and_name, file_path) > 0) {
-            if (cursor->prev) {
-                cursor->prev->next = new_entry;
-                new_entry->prev = cursor->prev;
-            } else {
-                list->head = new_entry;
-            }
-            cursor->prev = new_entry;
-            new_entry->next = cursor;
-            return new_entry;
-        }
-        if (!cursor->next) {
-            cursor->next = new_entry;
-            new_entry->prev = cursor;
-            list->tail = new_entry;
-            return new_entry;
-        }
-        cursor = cursor->next;
-    }
-    return NULL;
-    */
+    // Copy the computed hash to the result
+    memcpy(result, &hash, sizeof(MD5Hash));
 }
 
 /*!
