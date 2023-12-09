@@ -29,51 +29,76 @@ void clear_files_list(files_list_t *list) {
  */
 files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
 
-    //we verify if the file already exists in the list
-    for (files_list_entry_t *cursor = list->head; cursor != NULL; cursor = cursor->next) {
-        if (strcmp(cursor->path_and_name, file_path) == 0) {
-            return 0;
-        }
-    }
-    // If the file does not exist in the list, we will add it
-
-    // we allocate memory for a variable of type files_list_entry_t named new_entry
-    files_list_entry_t *new_entry = malloc(sizeof(files_list_entry_t));
-    // We check if the allocation of memory was successful, if not we return NULL (out of memory)
-    if (!new_entry) {
-        return NULL;
-    }
-
-    // We initialize the entire memory space allocated to new entry to 0;
-    memset(new_entry, 0, sizeof(files_list_entry_t));
-
-    // We call the fill_entry function to fill the different elements of the structure of new_entry
-    if ((fill_entry(list, file_path, new_entry)) == 0){
-
-        // We add the new_entry to the list of files, but we have to add it in an ordered manner (with strcmp)
-        // We check if the list is empty, if it is we add the new_entry to the head of the list
-        // else we will add it in an ordered manner
-        if (list->head == NULL) {
-            list->head = new_entry;
-            return new_entry;
-        } else {
+    // We verify that the list and the file_path are not NULL
+    if (list != NULL && file_path != NULL){
+        //we verify if the file already exists in the list
+        if (list->head != NULL && list->tail != NULL) {
             for (files_list_entry_t *cursor = list->head; cursor != NULL; cursor = cursor->next) {
-                if (strcmp(cursor->path_and_name, file_path) > 0) {
-                    cursor = cursor->next;
-                } else {
-                    if (cursor->prev) {
-                        cursor->prev->next = new_entry;
-                        new_entry->prev = cursor->prev;
-                    } else {
-                        list->head = new_entry;
-                    }
-                    cursor->prev = new_entry;
-                    new_entry->next = cursor;
-                    return new_entry;
-
+                if (strcmp(cursor->path_and_name, file_path) == 0) {
+                    return 0;
                 }
             }
         }
+        // If the file does not exist in the list, we will add it
+
+        // we allocate memory for a variable of type files_list_entry_t named new_entry
+        files_list_entry_t *new_entry = malloc(sizeof(files_list_entry_t));
+        // We check if the allocation of memory was successful, if not we return NULL (out of memory)
+        if (!new_entry) {
+            printf("Error when allocating memory in the function add_file_entry of the file files-list.c\n");
+            return NULL;
+        }
+
+        // We initialize the entire memory space allocated to new entry to 0;
+        memset(new_entry, 0, sizeof(files_list_entry_t));
+
+        // We call the fill_entry function to fill the different elements of the structure of new_entry
+        if ((fill_entry(list, file_path, new_entry)) == 0){
+
+            // We add the new_entry to the list of files, but we have to add it in an ordered manner (with strcmp)
+            // We check if the list is empty, if it is we add the new_entry to the head of the list
+            // else we will add it in an ordered manner
+            if (list->head == NULL) {
+                list->head = new_entry;
+                return new_entry;
+            } else {
+                files_list_entry_t *cursor = list->head;
+                while (cursor != NULL) {
+                    if (strcmp(cursor->path_and_name, file_path) > 0) {
+                        cursor = cursor->next;
+                    } else {
+                        if (cursor->prev) {
+                            cursor->prev->next = new_entry;
+                            new_entry->prev = cursor->prev;
+                        } else {
+                            list->head = new_entry;
+                        }
+                        cursor->prev = new_entry;
+                        new_entry->next = cursor;
+                        return new_entry;
+                    }
+                }
+                list->tail->next = new_entry;
+                return new_entry;
+            }
+        } else {
+            // If the fill_entry function failed we free the memory allocated to new_entry, and we return NULL,
+            // the error message is already displayed in the fill_entry function
+            free(new_entry);
+            return NULL;
+        }
+    } else {
+        printf("Error in the function add_file_entry of the file files-list.c\n");
+        if (list == NULL && file_path == NULL){
+            printf("The list and the file_path are NULL\n");
+        }
+        if (list == NULL && file_path != NULL){
+            printf("The list is NULL\n");
+        }
+        if (list != NULL && file_path == NULL){
+            printf("The file_path is NULL\n");
+        }
+        return NULL;
     }
 }
 
@@ -104,7 +129,8 @@ int fill_entry(files_list_t *list, char *file_path, files_list_entry_t *new_entr
         //      that contains two elements: tv_sec and tv_nsec
         //      two variables of type time_t (long int) or simply long that represent the time in seconds
         //      ,so we can simply copy the structure st_mtimespec in mtime without any problem
-        new_entry->mtime = info_file.st_mtimespec;
+        new_entry->mtime = info_file.st_mtime;
+
 
         //  Filling "uint64_t size"
         new_entry->size = info_file.st_size;
