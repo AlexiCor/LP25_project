@@ -60,36 +60,36 @@ void synchronize(configuration_t *the_config, process_context_t *p_context) {
  * @return true if both files are not equal, false else
  */
 bool mismatch(files_list_entry_t *lhd, files_list_entry_t *rhd, bool has_md5) {
-    //Initialisation de variables de tests
+    //Initialisation of the tests variables
     bool same_mode = false;
     bool same_mtime = false;
     bool same_size = false;
     bool same_entry_type = false;
     bool same_md5_sum = true;
 
-    if (lhd->mode == rhd->mode){ //On vérifie si les permissions sont les même
+    if (lhd->mode == rhd->mode){ //Checks if the permissions are the same
         same_mode = true;
     }
-    if (lhd->mtime.tv_sec == rhd->mtime.tv_sec && lhd->mtime.tv_nsec == rhd->mtime.tv_nsec){ //On vérifie le temps est le même
+    if (lhd->mtime.tv_sec == rhd->mtime.tv_sec && lhd->mtime.tv_nsec == rhd->mtime.tv_nsec){ //Checks if the time is the same
         same_mtime = true;
     }
-    if (lhd->size == rhd->size){ //On vérifie si la taille est la même
+    if (lhd->size == rhd->size){ //Checks if the size is the same
         same_size = true;
     }
-    if (lhd->entry_type == rhd->entry_type && lhd->entry_type == FICHIER){ //On vérifie si les fichiers sont du même type (de type FICHIER)
+    if (lhd->entry_type == rhd->entry_type && lhd->entry_type == FICHIER){ //Checks if the files are of the same type (type FICHIER)
         same_entry_type = true;
     }
-    if (has_md5 == true){ //On vérifie si la vérification de la somme MD5 est activée
-        if (lhd->md5sum != rhd->md5sum){ //On vérifie si la somme MD5 est différente
+    if (has_md5 == true){ //Checks if the verification of MD5 sum is enabled
+        if (lhd->md5sum != rhd->md5sum){ //Checks if the MD5 sum is different
             same_mode = false;
         }
     }
 
     if (same_mode && same_mtime && same_size && same_entry_type && same_md5_sum){
-        return false; //Les fichiers sont les même
+        return false; //Files are the same
     }
     else {
-        return true; //Les fichiers sont différents
+        return true; //Files are differents
     }
 }
 
@@ -144,7 +144,9 @@ void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t
 
     // Open source file
     int source_fd = open(source_entry->path_and_name, O_RDONLY);
-    if (source_fd == -1) return;
+    if (source_fd == -1) {
+        return;
+    }
 
     // Create destination file path
     char destination_path[4096];
