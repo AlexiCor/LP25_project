@@ -218,6 +218,7 @@ int add_entry_to_tail(files_list_t *list, files_list_entry_t *entry) {
         }
     } else {
         printf("Error in the function add_entry_to_tail of the file files-list.c\n");
+        printf("The list or the entry is NULL\n");
         return -1;
     }
 }
@@ -232,6 +233,26 @@ int add_entry_to_tail(files_list_t *list, files_list_entry_t *entry) {
  *  @return a pointer to the element found, NULL if none were found.
  */
 files_list_entry_t *find_entry_by_name(files_list_t *list, char *file_path, size_t start_of_src, size_t start_of_dest) {
+
+    // We check if the list is not NULL
+    if (list != NULL) {
+        // We check if the list is empty, if it is we return NULL
+        if (list->head == NULL) {
+            return NULL;
+        } else {
+            // We create a variable of type files_list_entry_t named cursor, and we initialize it with the head of the list
+            files_list_entry_t *cursor = list->head;
+            while(cursor != NULL) {
+                // We check if the file_path is the same as the path_and_name of the cursor
+                // if it is we return the cursor
+                if (strcmp(file_path, cursor->path_and_name) == 0) {
+                    return cursor;
+                } else {
+                    cursor = cursor->next;
+                }
+            }
+        }
+    }
 }
 
 /*!
