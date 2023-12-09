@@ -16,6 +16,14 @@
  * @return 0 if all went good, -1 else
  */
 int prepare(configuration_t *the_config, process_context_t *p_context) {
+       if (!the_config || !p_context) return -1;
+
+    if (!the_config->is_parallel) return 0; // Only prepare if parallel is enabled
+
+    // Initialize necessary resources for parallel processing
+    // This could include setting up message queues, allocating memory for process IDs, etc.
+
+    return 0; // Return 0 if successful, -1 otherwise
 }
 
 /*!
@@ -26,6 +34,20 @@ int prepare(configuration_t *the_config, process_context_t *p_context) {
  * @return the PID of the child process (it never returns in the child process)
  */
 int make_process(process_context_t *p_context, process_loop_t func, void *parameters) {
+     if (!p_context || !func) return -1;
+
+    pid_t pid = fork();
+    if (pid == -1) {
+        // Handle error in fork
+        return -1;
+    } else if (pid == 0) {
+        // In child process
+        func(parameters);
+        exit(0);
+    }
+
+    // In parent process
+    return pid;
 }
 
 /*!
@@ -33,6 +55,7 @@ int make_process(process_context_t *p_context, process_loop_t func, void *parame
  * @param parameters is a pointer to its parameters, to be cast to a lister_configuration_t
  */
 void lister_process_loop(void *parameters) {
+
 }
 
 /*!
@@ -40,6 +63,7 @@ void lister_process_loop(void *parameters) {
  * @param parameters is a pointer to its parameters, to be cast to an analyzer_configuration_t
  */
 void analyzer_process_loop(void *parameters) {
+
 }
 
 /*!
@@ -48,6 +72,7 @@ void analyzer_process_loop(void *parameters) {
  * @param p_context is a pointer to the processes context
  */
 void clean_processes(configuration_t *the_config, process_context_t *p_context) {
+    
     // Do nothing if not parallel
     // Send terminate
     // Wait for responses
