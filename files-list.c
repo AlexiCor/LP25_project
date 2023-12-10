@@ -129,7 +129,8 @@ int fill_entry(files_list_t *list, char *file_path, files_list_entry_t *new_entr
         //      that contains two elements: tv_sec and tv_nsec
         //      two variables of type time_t (long int) or simply long that represent the time in seconds
         //      ,so we can simply copy the structure st_mtimespec in mtime without any problem
-        new_entry->mtime = info_file.st_mtime;
+        new_entry->mtime.tv_sec = info_file.st_mtime;
+        new_entry->mtime.tv_nsec = 0;
 
 
         //  Filling "uint64_t size"
@@ -281,6 +282,8 @@ files_list_entry_t *find_entry_by_name(files_list_t *list, char *file_path, size
             return NULL;
         }
     }
+    printf("Error");
+    return NULL;
 }
 
 /*!
