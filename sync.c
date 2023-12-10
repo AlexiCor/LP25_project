@@ -99,10 +99,14 @@ bool mismatch(files_list_entry_t *lhd, files_list_entry_t *rhd, bool has_md5) {
  * @param target_path is the path whose files to list
  */
 void make_files_list(files_list_t *list, char *target_path) {
-    if (!list || !target_path) return;
+    if (!list || !target_path){
+        return;
+    }
 
     DIR *dir = opendir(target_path);
-    if (!dir) return;
+    if (!dir){
+        return;
+    }
 
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
@@ -183,6 +187,14 @@ void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t
  * @param target is the target dir whose content must be listed
  */
 void make_list(files_list_t *list, char *target) {
+    struct _files_list_entry *dirp;
+
+    while ((dirp = readdir(open_dir(target))) != NULL) {
+        if (strcmp(dirp->path_and_name, ".") != 0 && strcmp(dirp->path_and_name, "..") != 0) {
+            list->tail->next = dirp;
+            list->tail = dirp;
+        }
+    }
 }
 
 /*!
