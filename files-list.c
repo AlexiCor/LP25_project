@@ -262,7 +262,7 @@ int add_entry_to_tail(files_list_t *list, files_list_entry_t *entry) {
 files_list_entry_t *find_entry_by_name(files_list_t *list, char *file_path, size_t start_of_src, size_t start_of_dest) {
 
     // We check if the list is not NULL
-    if (list != NULL) {
+    if (list != NULL && file_path != NULL) {
         // We check if the list is empty, if it is we return NULL
         if (list->head == NULL) {
             return NULL;
@@ -281,8 +281,17 @@ files_list_entry_t *find_entry_by_name(files_list_t *list, char *file_path, size
             // If we did not find the file_path in the list we return NULL
             return NULL;
         }
-    }
-    printf("Error");
+    } else {
+        printf("Error in the function find_entry_by_name of the file files-list.c\n");
+        if (list == NULL && file_path == NULL){
+            printf("The list and the file_path are NULL\n");
+        }
+        if (list == NULL && file_path != NULL){
+            printf("The list is NULL\n");
+        }
+        if (list != NULL && file_path == NULL){
+            printf("The file_path is NULL\n");
+        }
     return NULL;
 }
 
