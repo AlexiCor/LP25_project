@@ -28,32 +28,25 @@ void display_help(char *my_name) {
  */
 void init_configuration(configuration_t *the_config) {
     //Initialisation de source
-    char source_init[1024] = "";
-    *the_config->source = *source_init;
+    strcpy(the_config->source, "");
 
     //Initialisation de destination
-    char destination_init[1024] = "";
-    *the_config->destination = *destination_init;
+    strcpy(the_config->destination, "");
 
     //Initialisation de processes_count
-    uint8_t processes_count_init = 1;
-    the_config->processes_count = processes_count_init;
+    the_config->processes_count = 1;
 
     //Initialisation de is_parallel
-    bool is_parallel_init = true;
-    the_config->is_parallel = is_parallel_init;
+    the_config->is_parallel = true;
 
     //Initialisation de uses_md5
-    bool uses_md58_init = true;
-    the_config->uses_md5 = uses_md58_init;
+    the_config->uses_md5 = true;
 
     //Initialisation de is_verbose
-    bool is_verbose_init = false;
-    the_config->is_verbose = is_verbose_init;
+    the_config->is_verbose = false;
 
     //Initialisation de is_dry_run
-    bool is_dry_run_init = false;
-    the_config->is_dry_run = is_dry_run_init;
+    the_config->is_dry_run = false;
 
 }
 
