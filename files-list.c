@@ -30,7 +30,20 @@ void clear_files_list(files_list_t *list) {
 files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
 
     // We verify that the list and the file_path are not NULL
-    if (list != NULL && file_path != NULL){
+    if (list == NULL || file_path == NULL){
+        printf("Error in the function add_file_entry of the file files-list.c\n");
+        if (list == NULL && file_path == NULL){
+            printf("The list and the file_path are NULL\n");
+        }
+        if (list == NULL && file_path != NULL){
+            printf("The list is NULL\n");
+        }
+        if (list != NULL && file_path == NULL){
+            printf("The file_path is NULL\n");
+        }
+        return NULL;
+
+    } else {
         //we verify if the file already exists in the list
         if (list->head != NULL && list->tail != NULL) {
             for (files_list_entry_t *cursor = list->head; cursor != NULL; cursor = cursor->next) {
@@ -87,18 +100,6 @@ files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
             free(new_entry);
             return NULL;
         }
-    } else {
-        printf("Error in the function add_file_entry of the file files-list.c\n");
-        if (list == NULL && file_path == NULL){
-            printf("The list and the file_path are NULL\n");
-        }
-        if (list == NULL && file_path != NULL){
-            printf("The list is NULL\n");
-        }
-        if (list != NULL && file_path == NULL){
-            printf("The file_path is NULL\n");
-        }
-        return NULL;
     }
 }
 
