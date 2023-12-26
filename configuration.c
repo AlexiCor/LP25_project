@@ -64,10 +64,10 @@ int set_configuration(configuration_t *the_config, int argc, char *argv[]) {
         return -1;
     } else {
         //source
-        *the_config->source = *argv[1];
+        strcpy(the_config->source, argv[1]);
 
         //destination
-        *the_config->destination = *argv[2];
+        strcpy(the_config->source, argv[2]);
 
         //Vérification des options
         int opt = 0;
@@ -94,6 +94,9 @@ int set_configuration(configuration_t *the_config, int argc, char *argv[]) {
                 case 'r':
                     the_config->is_dry_run = true;
                     break;
+                case 'h':
+                    printf("This function analyze two repertories and synchronizes them in one direction\n"
+                           "Usage : backup source destination\nPossible options : n v r d/date-size-only p/no-parallel r/dry-run\n");
                 default:
                     printf("Wrong option or missing argument for option\n");
             }
