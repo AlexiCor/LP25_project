@@ -60,71 +60,50 @@ void synchronize(configuration_t *the_config, process_context_t *p_context) {
  * @return true if both files are not equal, false else
  */
 bool mismatch(files_list_entry_t *lhd, files_list_entry_t *rhd, bool has_md5) {
-    //Initialisation of the tests variables
-    bool same_mode = false;
-    bool same_mtime = false;
-    bool same_size = false;
-    bool same_entry_type = false;
-    bool same_md5_sum = true;
+    if (lhd->mode != rhd->mode || lhd->mtime.tv_sec != rhd->mtime.tv_sec || lhd->mtime.tv_nsec != rhd->mtime.tv_nsec || lhd->size != rhd->size || (lhd->entry_type == FICHIER && rhd->entry_type != FICHIER)) {
+        return true;
+    }
 
-    if (lhd->mode == rhd->mode){ //Checks if the permissions are the same
-        same_mode = true;
-    }
-    if (lhd->mtime.tv_sec == rhd->mtime.tv_sec && lhd->mtime.tv_nsec == rhd->mtime.tv_nsec){ //Checks if the time is the same
-        same_mtime = true;
-    }
-    if (lhd->size == rhd->size){ //Checks if the size is the same
-        same_size = true;
-    }
-    if (lhd->entry_type == rhd->entry_type && lhd->entry_type == FICHIER){ //Checks if the files are of the same type (type FICHIER)
-        same_entry_type = true;
-    }
-    if (has_md5 == true){ //Checks if the verification of MD5 sum is enabled
-        if (lhd->md5sum != rhd->md5sum){ //Checks if the MD5 sum is different
-            same_mode = false;
+    if (has_md5) {
+        for (int i = 0; i < 16; i++) {
+            if (lhd->md5sum[i] != rhd->md5sum[i]) {
+                return true;
+            }
         }
     }
 
-    if (same_mode && same_mtime && same_size && same_entry_type && same_md5_sum){
-        return false; //Files are the same
-    }
-    else {
-        return true; //Files are differents
-    }
+    return false;
 }
-
 /*!
  * @brief make_files_list builds a files list in no parallel mode
  * @param list is a pointer to the list that will be built
  * @param target_path is the path whose files to list
  */
 void make_files_list(files_list_t *list, char *target_path) {
-    if (!list || !target_path){
+    if (!list || !target_path) {
         return;
     }
 
     DIR *dir = opendir(target_path);
-    if (!dir){
+    if (!dir) {
         return;
     }
 
     struct dirent *entry;
-    while ((entry = readdir(dir)) != NULL) {
-        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
-            continue;
-        }
-
-        // Construct full path
+    while ((entry = get_next_entry(dir)) != NULL) {
+        // Construire le chemin complet
         char full_path[4096];
         snprintf(full_path, sizeof(full_path), "%s/%s", target_path, entry->d_name);
 
-        // Create new list entry
+        // Créer une nouvelle entrée dans la liste
         files_list_entry_t *new_entry = add_file_entry(list, full_path);
-        // Here you might want to set additional properties for new_entry if needed
+        // Ici, vous pouvez définir des propriétés supplémentaires pour new_entry si nécessaire
+        // Si vous voulez inclure les sous-répertoires, appelez récursivement make_files_list pour les parcourir
     }
 
     closedir(dir);
 }
+
 
 /*!
  * @brief make_files_lists_parallel makes both (src and dest) files list with parallel processing
@@ -146,30 +125,30 @@ void make_files_lists_parallel(files_list_t *src_list, files_list_t *dst_list, c
 void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t *the_config) {
     if (!source_entry || !the_config) return;
 
-    // Open source file
+    // Ouvrir le fichier source
     int source_fd = open(source_entry->path_and_name, O_RDONLY);
     if (source_fd == -1) {
         return;
     }
 
-    // Create destination file path
+    // Créer le chemin du fichier de destination
     char destination_path[4096];
-    // Assuming concat_path is implemented correctly
+    // En supposant que concat_path soit implémentée correctement
     concat_path(destination_path, the_config->destination, source_entry->path_and_name);
 
-    // Open or create destination file
+    // Ouvrir ou créer le fichier de destination
     int dest_fd = open(destination_path, O_WRONLY | O_CREAT, source_entry->mode);
     if (dest_fd == -1) {
         close(source_fd);
         return;
     }
 
-    // Copy file data
+    // Copier les données du fichier
     struct stat file_stat;
     fstat(source_fd, &file_stat);
     sendfile(dest_fd, source_fd, NULL, file_stat.st_size);
 
-    // Preserve mtime
+    // Conserver l'heure de modification
     struct timespec times[2];
     times[0] = source_entry->mtime; // atime
     times[1] = source_entry->mtime; // mtime
@@ -187,15 +166,30 @@ void copy_entry_to_destination(files_list_entry_t *source_entry, configuration_t
  * @param target is the target dir whose content must be listed
  */
 void make_list(files_list_t *list, char *target) {
-    struct _files_list_entry *dirp;
+    DIR *dir = open_dir(target);
+    if (!dir) {
+        return;
+    }
 
-    while ((dirp = readdir(open_dir(target))) != NULL) {
-        if (strcmp(dirp->path_and_name, ".") != 0 && strcmp(dirp->path_and_name, "..") != 0) {
-            list->tail->next = dirp;
-            list->tail = dirp;
+    struct dirent *entry;
+    while ((entry = get_next_entry(dir)) != NULL) {
+        // Construire le chemin complet
+        char full_path[4096];
+        snprintf(full_path, sizeof(full_path), "%s/%s", target, entry->d_name);
+
+        // Créer une nouvelle entrée dans la liste
+        files_list_entry_t *new_entry = add_file_entry(list, full_path);
+        // Ici, vous pouvez définir des propriétés supplémentaires pour new_entry si nécessaire
+
+        // Si l'entrée est un répertoire, appelez récursivement make_list pour explorer son contenu
+        if (new_entry->entry_type == DOSSIER) {
+            make_list(list, new_entry->path_and_name);
         }
     }
+
+    closedir(dir);
 }
+
 
 /*!
  * @brief open_dir opens a dir
@@ -203,7 +197,11 @@ void make_list(files_list_t *list, char *target) {
  * @return a pointer to a dir, NULL if it cannot be opened
  */
 DIR *open_dir(char *path) {
-    return opendir(path);
+    DIR *dir = opendir(path);
+    if (!dir) {
+        perror("Erreur lors de l'ouverture du répertoire");
+    }
+    return dir;
 }
 
 
