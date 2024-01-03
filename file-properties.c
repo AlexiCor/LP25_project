@@ -27,25 +27,42 @@
  * @return -1 in case of error, 0 else
  */
 int get_file_stats(files_list_entry_t *entry) {
+
+    // We create a variable of type struct stat to stock the information that the stat function returns about the file
     struct stat file_stat;
+
+    // Use of the stat function to obtain information about the file
+    // We verify if the stat function was successful,
+        // if not we return -1
+        // else we fill the different elements of the structure of new_entry
     if (stat(entry->path_and_name, &file_stat) == -1) {
         perror("stat");
         return -1; // Error while getting file stats
-    }
-
-    entry->mode = file_stat.st_mode;
-    entry->mtime.tv_nsec = (file_stat.st_mtime)*1000000000;
-    entry->size = file_stat.st_size;
-
-    if (S_ISREG(file_stat.st_mode)) {
-        entry->entry_type = FICHIER;
-    } else if (S_ISDIR(file_stat.st_mode)) {
-        entry->entry_type = DOSSIER;
     } else {
-        return -1; // Unsupported file type
-    }
+        // mode (permissions)
+        entry->mode = file_stat.st_mode;
 
-    return 0; // Success
+        // entry type
+        if (S_ISREG(file_stat.st_mode)) {
+            entry->entry_type = FICHIER;
+            // mtime (in nanoseconds)
+            entry->mtime.tv_nsec = (file_stat.st_mtime)*1000000000;
+            // size
+            entry->size = file_stat.st_size;
+            // MD5 sum
+
+            if((compute_file_md5(entry)) == -1){
+                perror("compute_file_md5")
+                return -1;
+            }
+        } else if (S_ISDIR(file_stat.st_mode)) {
+            entry->entry_type = DOSSIER;
+        } else {
+            return -1; // Unsupported file type
+        }
+
+        return 0; // Success
+    }
 }
 
 /*!

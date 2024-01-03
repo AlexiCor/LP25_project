@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <sys/stat.h>
+#include <file-properties.h>
 
 /*!
  * @brief clear_files_list clears a files list
@@ -113,105 +114,27 @@ files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
  */
 int fill_entry(files_list_t *list, char *file_path, files_list_entry_t *new_entry) {
 
-    // We create a variable of type struct stat to stock the information that the stat function returns about the file
-    struct stat info_file;
+    //  Filling "char path_and_name[4096]";
+    strcpy(new_entry->path_and_name, file_path);
 
-    // Use of the stat function to obtain information about the file
-    // We verify if the stat function was successful,
-        // if it was we fill the different elements of the structure of new_entry
-        // if not we return -1
-    if (stat(file_path, &info_file) == 0) {
-
-        //  Filling "char path_and_name[4096]";
-        strcpy(new_entry->path_and_name, file_path);
-
-        //  Filling "struct timespec mtime"
-        //      st_mtimespec and mtime are both a structure called timespec:
-        //      that contains two elements: tv_sec and tv_nsec
-        //      two variables of type time_t (long int) or simply long that represent the time in seconds
-        //      ,so we can simply copy the structure st_mtimespec in mtime without any problem
-        new_entry->mtime.tv_sec = info_file.st_mtime;
-        new_entry->mtime.tv_nsec = 0;
-
-
-        //  Filling "uint64_t size"
-        new_entry->size = info_file.st_size;
-
-        //  Filling "uint8_t md5sum[16]"
-        compute_md5_file(file_path, new_entry->md5sum);
-
-        //  Filling "file_type_t entry_type"
-        //      We use the macro S_ISDIR to check if the file is a directory
-        //      If it is a directory we fill entry_type with DOSSIER
-        //      We use the macro S_ISREG to check if the file is a regular file
-        //      If it is a regular file we fill entry_type with FICHIER
-        if (S_ISDIR(info_file.st_mode)) {
-            new_entry->entry_type = DOSSIER;
-        }
-        if (S_ISREG(info_file.st_mode)) {
-            new_entry->entry_type = FICHIER;
-        }
-
-        //  Filling "mode_t mode"
-        new_entry->mode = info_file.st_mode;
-
-        //  Filling "struct _files_list_entry *next"
-        new_entry->next = NULL;
-
-        //  Filling "struct _files_list_entry *prev"
-        if (!list->tail) {
-            new_entry->prev = list->tail;
-        } else {
-            new_entry->prev = NULL;
-        }
-        list->tail = new_entry;
-        return 0;
-
-    } else {
-        printf("Error when recuperating the information about the file in the function fill_entry of the file files-list.c\n");
+    if (get_file_stats(new_entry)) == -1){
+        printf("Error in the function fill_entry of the file files-list.c\n");
+        printf("The get_file_stats function failed\n");
         return -1;
     }
-}
 
-#define MAX_BUFFER_SIZE 1024
+    //  Filling "struct _files_list_entry *next"
+    new_entry->next = NULL;
 
-typedef struct {
-    uint8_t data[16];
-} MD5Hash;
-
-/*!
- * @brief compute_md5_file computes the MD5 hash of a file
- * @param filename is the name of the file to hash
- * @param result is the resulting hash modified by the function
- */
-void compute_md5_file(const char *filename, uint8_t result[16]) {
-    FILE *file = fopen(filename, "rb");
-    if (!file) {
-        perror("Error opening file");
-        exit(EXIT_FAILURE);
+    //  Filling "struct _files_list_entry *prev"
+    if (!list->tail) {
+        new_entry->prev = list->tail;
+    } else {
+        new_entry->prev = NULL;
     }
+    list->tail = new_entry;
 
-    unsigned char buffer[MAX_BUFFER_SIZE];
-    size_t bytesRead;
-    MD5Hash hash;
-
-    // Initialize hash
-    for (int i = 0; i < 16; i++) {
-        hash.data[i] = 0;
-    }
-
-    // Read file and update hash
-    while ((bytesRead = fread(buffer, 1, sizeof(buffer), file)) > 0) {
-        for (size_t i = 0; i < bytesRead; i++) {
-            // Simple XOR operation for illustration purposes
-            hash.data[i % 16] ^= buffer[i];
-        }
-    }
-
-    fclose(file);
-
-    // Copy the computed hash to the result
-    memcpy(result, &hash, sizeof(MD5Hash));
+    return 0;
 }
 
 /*!
@@ -223,9 +146,20 @@ void compute_md5_file(const char *filename, uint8_t result[16]) {
  * @return 0 in case of success, -1 else
  */
 int add_entry_to_tail(files_list_t *list, files_list_entry_t *entry) {
-
-    // We check if the list and the entry are not NULL
-    if (list != NULL && entry != NULL) {
+    // We check if the list or the entry are NULL or not
+    if (list == NULL || entry == NULL) {
+        printf("Error in the function add_entry_to_tail of the file files-list.c\n");
+        if (list == NULL && entry == NULL) {
+            printf("The list is NULL\n");
+        }
+        if (list == NULL && entry != NULL) {
+            printf("The list is NULL\n");
+        }
+        if (list != NULL && entry == NULL) {
+            printf("The entry is NULL\n");
+        }
+        return -1;
+    } else {
         // We check if the list is empty, if it is we add the entry to the head and the tail of the list (the list has only one element)
         // else we will add it only to the tail of the list
         if (list->head == NULL && list->tail == NULL) {
@@ -244,10 +178,6 @@ int add_entry_to_tail(files_list_t *list, files_list_entry_t *entry) {
                 return -1;
             }
         }
-    } else {
-        printf("Error in the function add_entry_to_tail of the file files-list.c\n");
-        printf("The list or the entry is NULL\n");
-        return -1;
     }
 }
 
@@ -262,15 +192,29 @@ int add_entry_to_tail(files_list_t *list, files_list_entry_t *entry) {
  */
 files_list_entry_t *find_entry_by_name(files_list_t *list, char *file_path, size_t start_of_src, size_t start_of_dest) {
 
-    // We check if the list is not NULL
-    if (list != NULL && file_path != NULL) {
+    // We check if the list or file_path is NULL or not
+    if (list == NULL || file_path == NULL) {
+        printf("Error in the function find_entry_by_name of the file files-list.c\n");
+        if (list == NULL && file_path == NULL) {
+            printf("The list and the file_path are NULL\n");
+        }
+        if (list == NULL && file_path != NULL) {
+            printf("The list is NULL\n");
+        }
+        if (list != NULL && file_path == NULL) {
+            printf("The file_path is NULL\n");
+        }
+        return NULL;
+    } else {
         // We check if the list is empty, if it is we return NULL
         if (list->head == NULL) {
+            printf("Error in the function find_entry_by_name of the file files-list.c\n");
+            printf("The head of the list is empty\n");
             return NULL;
         } else {
             // We create a variable of type files_list_entry_t named cursor, and we initialize it with the head of the list
             files_list_entry_t *cursor = list->head;
-            while(cursor != NULL) {
+            while (cursor != NULL) {
                 // We check if the file_path is the same as the path_and_name of the cursor
                 // if it is we return the cursor
                 if (strcmp(file_path, cursor->path_and_name) == 0) {
@@ -280,20 +224,11 @@ files_list_entry_t *find_entry_by_name(files_list_t *list, char *file_path, size
                 }
             }
             // If we did not find the file_path in the list we return NULL
+            printf("Error in the function find_entry_by_name of the file files-list.c\n");
+            printf("The file_path is not in the list\n");
             return NULL;
         }
-    } else {
-        printf("Error in the function find_entry_by_name of the file files-list.c\n");
-        if (list == NULL && file_path == NULL){
-            printf("The list and the file_path are NULL\n");
-        }
-        if (list == NULL && file_path != NULL){
-            printf("The list is NULL\n");
-        }
-        if (list != NULL && file_path == NULL){
-            printf("The file_path is NULL\n");
-        }
-    return NULL;
+    }
 }
 
 /*!
