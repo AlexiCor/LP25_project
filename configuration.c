@@ -95,8 +95,8 @@ int set_configuration(configuration_t *the_config, int argc, char *argv[]) {
                     the_config->is_dry_run = true;
                     break;
                 case 'h':
-                    printf("This function analyze two repertories and synchronizes them in one direction\n"
-                           "Usage : backup source destination\nPossible options : n v r d/date-size-only p/no-parallel r/dry-run\n");
+                    display_help(argv[0]);
+                    break;
                 default:
                     printf("Wrong option or missing argument for option\n");
             }
