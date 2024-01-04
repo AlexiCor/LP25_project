@@ -50,11 +50,11 @@ files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
         return NULL;
     } else {
         //we verify if the file already exists in the list
-            for (files_list_entry_t *cursor = list->head; cursor != NULL; cursor = cursor->next) {
-                if (strcmp(cursor->path_and_name, file_path) == 0) {
-                    return 0;
-                }
+        for (files_list_entry_t *cursor = list->head; cursor != NULL; cursor = cursor->next) {
+            if (strcmp(cursor->path_and_name, file_path) == 0) {
+                return 0;
             }
+        }
         // If the file does not exist in the list, we will add it
 
         // we allocate memory for a variable of type files_list_entry_t named new_entry
@@ -165,17 +165,15 @@ int add_entry_to_tail(files_list_t *list, files_list_entry_t *entry) {
             list->head = entry;
             list->tail = entry;
             return 0;
+        } else if (list->head != NULL && list->tail != NULL){
+            list->tail->next = entry;
+            entry->prev = list->tail;
+            list->tail = entry;
+            return 0;
         } else {
-            if (list->head != NULL && list->tail != NULL) {
-                list->tail->next = entry;
-                entry->prev = list->tail;
-                list->tail = entry;
-                return 0;
-            } else {
-                printf("Error in the function add_entry_to_tail of the file files-list.c\n");
-                printf("The list is not empty but the head or the tail is NULL\n");
-                return -1;
-            }
+            printf("Error in the function add_entry_to_tail of the file files-list.c\n");
+            printf("The list is not empty but the head or the tail is NULL\n");
+            return -1;
         }
     }
 }
