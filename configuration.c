@@ -67,7 +67,7 @@ int set_configuration(configuration_t *the_config, int argc, char *argv[]) {
         strcpy(the_config->source, argv[1]);
 
         //destination
-        strcpy(the_config->source, argv[2]);
+        strcpy(the_config->destination, argv[2]);
 
         //Vérification des options
         int opt = 0;
