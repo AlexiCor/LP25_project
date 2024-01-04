@@ -31,28 +31,30 @@ void clear_files_list(files_list_t *list) {
 files_list_entry_t *add_file_entry(files_list_t *list, char *file_path) {
 
     // We verify that the list and the file_path are not NULL
-    if (list == NULL || file_path == NULL){
+    if (list == NULL || file_path == NULL) {
         printf("Error in the function add_file_entry of the file files-list.c\n");
-        if (list == NULL && file_path == NULL){
-            printf("The list and the file_path are NULL\n");
-        }
-        if (list == NULL && file_path != NULL){
+        if (list == NULL) {
             printf("The list is NULL\n");
         }
-        if (list != NULL && file_path == NULL){
+        if (file_path == NULL) {
             printf("The file_path is NULL\n");
         }
         return NULL;
-
+    } else if (list->head == NULL || list->tail == NULL) {
+        if (list->head == NULL) {
+            printf("The head of the list is NULL\n");
+        }
+        if (list->tail == NULL) {
+            printf("The tail of the list is NULL\n");
+        }
+        return NULL;
     } else {
         //we verify if the file already exists in the list
-        if (list->head != NULL && list->tail != NULL) {
             for (files_list_entry_t *cursor = list->head; cursor != NULL; cursor = cursor->next) {
                 if (strcmp(cursor->path_and_name, file_path) == 0) {
                     return 0;
                 }
             }
-        }
         // If the file does not exist in the list, we will add it
 
         // we allocate memory for a variable of type files_list_entry_t named new_entry
@@ -149,13 +151,10 @@ int add_entry_to_tail(files_list_t *list, files_list_entry_t *entry) {
     // We check if the list or the entry are NULL or not
     if (list == NULL || entry == NULL) {
         printf("Error in the function add_entry_to_tail of the file files-list.c\n");
-        if (list == NULL && entry == NULL) {
+        if (list == NULL) {
             printf("The list is NULL\n");
         }
-        if (list == NULL && entry != NULL) {
-            printf("The list is NULL\n");
-        }
-        if (list != NULL && entry == NULL) {
+        if (entry == NULL) {
             printf("The entry is NULL\n");
         }
         return -1;
@@ -195,39 +194,32 @@ files_list_entry_t *find_entry_by_name(files_list_t *list, char *file_path, size
     // We check if the list or file_path is NULL or not
     if (list == NULL || file_path == NULL) {
         printf("Error in the function find_entry_by_name of the file files-list.c\n");
-        if (list == NULL && file_path == NULL) {
-            printf("The list and the file_path are NULL\n");
-        }
-        if (list == NULL && file_path != NULL) {
+        if (list == NULL) {
             printf("The list is NULL\n");
         }
-        if (list != NULL && file_path == NULL) {
+        if (file_path == NULL) {
             printf("The file_path is NULL\n");
         }
         return NULL;
+    } else if (list->head == NULL) {
+        printf("The head of the list is NULL\n");
+        return NULL;
     } else {
-        // We check if the list is empty, if it is we return NULL
-        if (list->head == NULL) {
-            printf("Error in the function find_entry_by_name of the file files-list.c\n");
-            printf("The head of the list is empty\n");
-            return NULL;
-        } else {
-            // We create a variable of type files_list_entry_t named cursor, and we initialize it with the head of the list
-            files_list_entry_t *cursor = list->head;
-            while (cursor != NULL) {
-                // We check if the file_path is the same as the path_and_name of the cursor
-                // if it is we return the cursor
-                if (strcmp(file_path, cursor->path_and_name) == 0) {
-                    return cursor;
-                } else {
-                    cursor = cursor->next;
-                }
+        // We create a variable of type files_list_entry_t named cursor, and we initialize it with the head of the list
+        files_list_entry_t *cursor = list->head;
+        while (cursor != NULL) {
+            // We check if the file_path is the same as the path_and_name of the cursor
+            // if it is we return the cursor
+            if (strcmp(file_path, cursor->path_and_name) == 0) {
+                return cursor;
+            } else {
+                cursor = cursor->next;
             }
-            // If we did not find the file_path in the list we return NULL
-            printf("Error in the function find_entry_by_name of the file files-list.c\n");
-            printf("The file_path is not in the list\n");
-            return NULL;
         }
+        // If we did not find the file_path in the list we return NULL
+        printf("Error in the function find_entry_by_name of the file files-list.c\n");
+        printf("The file_path is not in the list\n");
+        return NULL;
     }
 }
 

@@ -51,8 +51,8 @@ int get_file_stats(files_list_entry_t *entry) {
             entry->size = file_stat.st_size;
             // MD5 sum
 
-            if((compute_file_md5(entry)) == -1){
-                perror("compute_file_md5")
+            if ((compute_file_md5(entry)) == -1) {
+                printf("compute_file_md5");
                 return -1;
             }
         } else if (S_ISDIR(file_stat.st_mode)) {
@@ -129,9 +129,7 @@ bool directory_exists(char *path_to_dir) {
 bool is_directory_writable(char *path_to_dir) {
     if (access(path_to_dir, W_OK) == 0) {
         return true; //Il est possible d'écrire dans le répertoire
-    }
-    else {
+    } else {
         return false; //Il est impossible d'écrire dans le répertoire
     }
-    return access(path_to_dir, W_OK) == 0;
 }
