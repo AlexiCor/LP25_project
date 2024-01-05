@@ -99,6 +99,9 @@ void make_files_list(files_list_t *list, char *target_path) {
         files_list_entry_t *new_entry = add_file_entry(list, full_path);
         // Ici, vous pouvez définir des propriétés supplémentaires pour new_entry si nécessaire
         // Si vous voulez inclure les sous-répertoires, appelez récursivement make_files_list pour les parcourir
+        if (new_entry->entry_type == DOSSIER) {
+            make_files_list(list, new_entry->path_and_name);
+        }
     }
 
     closedir(dir);
