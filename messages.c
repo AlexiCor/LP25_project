@@ -14,6 +14,15 @@
  * Used by the specialized functions send_analyze*
  */
 int send_file_entry(int msg_queue, int recipient, files_list_entry_t *file_entry, int cmd_code) {
+
+    files_list_entry_transmit_t msg;
+
+    msg.mtype = recipient;
+    msg.op_code = cmd_code;
+    msg.payload = *file_entry;
+    msg.reply_to = msg_queue;
+
+    return msgsnd(msg_queue, &msg, sizeof(files_list_entry_transmit_t), 0);
 }
 
 /*!
