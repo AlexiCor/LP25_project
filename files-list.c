@@ -119,7 +119,7 @@ int fill_entry(files_list_t *list, char *file_path, files_list_entry_t *new_entr
     //  Filling "char path_and_name[4096]";
     strcpy(new_entry->path_and_name, file_path);
 
-    if (get_file_stats(new_entry)) == -1){
+    if ((get_file_stats(new_entry)) == -1) {
         printf("Error in the function fill_entry of the file files-list.c\n");
         printf("The get_file_stats function failed\n");
         return -1;
