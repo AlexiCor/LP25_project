@@ -33,6 +33,14 @@ int send_file_entry(int msg_queue, int recipient, files_list_entry_t *file_entry
  * @return the result of msgsnd
  */
 int send_analyze_dir_command(int msg_queue, int recipient, char *target_dir) {
+
+    analyze_dir_command_t msg;
+
+    msg.mtype = recipient;
+    msg.op_code = COMMAND_CODE_ANALYZE_DIR;
+    strcmp(msg.target, target_dir);
+
+    return msgsnd(msg_queue, &msg, sizeof(analyze_dir_command_t), 0);
 }
 
 // The 3 following functions are one-liners
