@@ -79,7 +79,25 @@ void lister_process_loop(void *parameters) {
  * @param parameters is a pointer to its parameters, to be cast to an analyzer_configuration_t
  */
 void analyzer_process_loop(void *parameters) {
+    lister_configuration_t* config = (lister_configuration_t*) parameters;
+    any_message_t msg;
 
+    int msg_id = msgget(config->mq_key, 0666);
+
+    while (msg.list_entry.op_code != COMMAND_CODE_TERMINATE){
+        if (msgrcv(msg_id, &msg, sizeof(any_message_t), config->my_receiver_id, 0) != -1) {
+            if (msg.analyze_file_command.op_code == COMMAND_CODE_ANALYZE_DIR) {
+                if ((get_file_stats(&msg.list_entry.payload)) == -1) {
+                    printf("Error in the function fill_entry of the file files-list.c\n");
+                    printf("The get_file_stats function failed\n");
+                }
+                send_analyze_file_response(msg_id, config->my_recipient_id, &msg.list_entry.payload);
+            }
+        }
+    }
+
+
+    send_terminate_confirm(msg_id, MSG_TYPE_TO_MAIN);
 }
 
 /*!
