@@ -72,6 +72,7 @@ int get_file_stats(files_list_entry_t *entry) {
  * Use libcrypto functions from openssl/evp.h
  */
 int compute_file_md5(files_list_entry_t *entry) {
+    /*
     if (!entry || !entry->path_and_name) return -1;
 
     FILE *file = fopen(entry->path_and_name, "rb");
@@ -100,7 +101,7 @@ int compute_file_md5(files_list_entry_t *entry) {
     unsigned int md_len;
     EVP_DigestFinal_ex(mdctx, entry->md5sum, &md_len);
     EVP_MD_CTX_free(mdctx);
-
+    */
     return 0;
 }
 
