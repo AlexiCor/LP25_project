@@ -20,6 +20,11 @@ int prepare(configuration_t *the_config, process_context_t *p_context) {
 
     if (!the_config->is_parallel) return 0; // Only prepare if parallel is enabled
 
+    p_context->processes_count = 0;
+    p_context->main_process_pid = getpid();
+    p_context->source_lister_pid = 0;
+    p_context->destination_lister_pid = 0;
+
     // Initialize necessary resources for parallel processing
     // This could include setting up message queues, allocating memory for process IDs, etc.
 
