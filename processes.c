@@ -55,7 +55,23 @@ int make_process(process_context_t *p_context, process_loop_t func, void *parame
  * @param parameters is a pointer to its parameters, to be cast to a lister_configuration_t
  */
 void lister_process_loop(void *parameters) {
+    lister_configuration_t* config = (lister_configuration_t*) parameters;
+    any_message_t msg;
+    files_list_t list;
+    list.head = NULL;
+    list.tail = NULL;
 
+    int msg_id = msgget(config->mq_key, 0666);
+
+    while (msg.list_entry.op_code != COMMAND_CODE_TERMINATE){
+        if (msgrcv(msg_id, &msg, sizeof(any_message_t), config->my_receiver_id, 0) != -1) {
+            if (msg.analyze_file_command.op_code == COMMAND_CODE_ANALYZE_DIR) {
+                make_list(&list, msg.analyze_dir_command.target);
+            }
+
+        }
+    }
+    send_terminate_confirm(msg_id, MSG_TYPE_TO_MAIN);
 }
 
 /*!
