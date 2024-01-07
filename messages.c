@@ -54,7 +54,7 @@ int send_analyze_dir_command(int msg_queue, int recipient, char *target_dir) {
  * Calls send_file_entry function
  */
 int send_analyze_file_command(int msg_queue, int recipient, files_list_entry_t *file_entry) {
-    return send_file_entry(msg_queue, recipient, file_entry, COMMAND_CODE_ANALYZE_FILE)
+    return send_file_entry(msg_queue, recipient, file_entry, COMMAND_CODE_ANALYZE_FILE);
 }
 
 /*!
@@ -66,7 +66,7 @@ int send_analyze_file_command(int msg_queue, int recipient, files_list_entry_t *
  * Calls send_file_entry function
  */
 int send_analyze_file_response(int msg_queue, int recipient, files_list_entry_t *file_entry) {
-    return send_file_entry(msg_queue, recipient, file_entry, COMMAND_CODE_FILE_ANALYZED)
+    return send_file_entry(msg_queue, recipient, file_entry, COMMAND_CODE_FILE_ANALYZED);
 }
 
 /*!
@@ -78,7 +78,7 @@ int send_analyze_file_response(int msg_queue, int recipient, files_list_entry_t 
  * Calls send_file_entry function
  */
 int send_files_list_element(int msg_queue, int recipient, files_list_entry_t *file_entry) {
-    return send_file_entry(msg_queue, recipient, file_entry, COMMAND_CODE_FILE_ENTRY)
+    return send_file_entry(msg_queue, recipient, file_entry, COMMAND_CODE_FILE_ENTRY);
 }
 
 /*!
