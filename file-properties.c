@@ -72,6 +72,7 @@ int get_file_stats(files_list_entry_t *entry) {
  * Use libcrypto functions from openssl/evp.h
  */
 int compute_file_md5(files_list_entry_t *entry) {
+    // the reason why we have put this function (except the return 0) in commentary is because the EVP functions weren't reconised when compiling the project
     /*
     if (!entry || !entry->path_and_name) return -1;
 
