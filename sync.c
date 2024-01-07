@@ -126,11 +126,11 @@ void make_files_lists_parallel(files_list_t *src_list, files_list_t *dst_list, c
 
     while (end != 2){
         msgrcv(msg_queue, &msg, sizeof(any_message_t), MSG_TYPE_TO_MAIN, 0);
-        if(msg.list_entry.op_code == COMMAND_CODE_FILE_ENTRY && the_config->destination == ) {
+        if(msg.list_entry.op_code == COMMAND_CODE_FILE_ENTRY && msg.list_entry.mtype == MSG_TYPE_TO_SOURCE_LISTER) {
             new_list = (files_list_entry_t *) malloc(sizeof(files_list_entry_t));
             memcpy(new_list, &msg.list_entry.payload, sizeof(files_list_entry_t));
             add_entry_to_tail(src_list, new_list);
-        } else if (msg.list_entry.op_code == COMMAND_CODE_FILE_ENTRY && the_config->source == ) {
+        } else if (msg.list_entry.op_code == COMMAND_CODE_FILE_ENTRY && msg.list_entry.mtype == MSG_TYPE_TO_DESTINATION_LISTER) {
             new_list = (files_list_entry_t *) malloc(sizeof(files_list_entry_t));
             memcpy(new_list, &msg.list_entry.payload, sizeof(files_list_entry_t));
             add_entry_to_tail(src_list, new_list);
