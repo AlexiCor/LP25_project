@@ -12,6 +12,7 @@
 #include <sys/msg.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 
 /*!
  * @brief synchronize is the main function for synchronization
@@ -116,6 +117,27 @@ void make_files_list(files_list_t *list, char *target_path) {
  * @param msg_queue is the id of the MQ used for communication
  */
 void make_files_lists_parallel(files_list_t *src_list, files_list_t *dst_list, configuration_t *the_config, int msg_queue) {
+    send_analyze_dir_command(msg_queue, MSG_TYPE_TO_SOURCE_LISTER, the_config->source);
+    send_analyze_dir_command(msg_queue, MSG_TYPE_TO_DESTINATION_LISTER, the_config->destination);
+
+    any_message_t msg;
+    files_list_entry_t *new_list = NULL;
+    int end = 0;
+
+    while (end != 2){
+        msgrcv(msg_queue, &msg, sizeof(any_message_t), MSG_TYPE_TO_MAIN, 0);
+        if(msg.list_entry.op_code == COMMAND_CODE_FILE_ENTRY && the_config->destination == ) {
+            new_list = (files_list_entry_t *) malloc(sizeof(files_list_entry_t));
+            memcpy(new_list, &msg.list_entry.payload, sizeof(files_list_entry_t));
+            add_entry_to_tail(src_list, new_list);
+        } else if (msg.list_entry.op_code == COMMAND_CODE_FILE_ENTRY && the_config->source == ) {
+            new_list = (files_list_entry_t *) malloc(sizeof(files_list_entry_t));
+            memcpy(new_list, &msg.list_entry.payload, sizeof(files_list_entry_t));
+            add_entry_to_tail(src_list, new_list);
+        } else if (msg.list_entry.op_code == COMMAND_CODE_LIST_COMPLETE) {
+            end++;
+        }
+    }
 }
 
 /*!
